@@ -7,6 +7,7 @@ use lazy_static::lazy_static;
 use log::{debug, info};
 use reqwest::blocking::Client;
 use serde_json::json;
+use shellexpand::tilde;
 use std::env;
 use std::fs;
 use std::io::Write;
@@ -22,7 +23,7 @@ struct Cli {
     #[arg(required = true)]
     words: Vec<String>,
 
-    #[arg(short, long, default_value = "./prompt")]
+    #[arg(short, long, default_value = "~/.config/nerf/prompt")]
     prompt: String,
 }
 
@@ -51,8 +52,9 @@ fn main() -> Result<()> {
 }
 
 fn load_prompt(file_path: &str) -> Result<String> {
-    fs::read_to_string(file_path)
-        .map_err(|e| eyre!("Failed to read prompt file '{}': {}", file_path, e))
+    let expanded_path = tilde(file_path);
+    fs::read_to_string(expanded_path.as_ref())
+        .map_err(|e| eyre!("Failed to read prompt file '{}': {}", expanded_path, e))
 }
 
 fn send_to_chatgpt(prompt: &str) -> Result<String> {
