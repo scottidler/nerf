@@ -27,8 +27,36 @@ struct Cli {
     prompt: String,
 }
 
+fn pretty_print_json(json_str: &str) -> Result<(), serde_json::Error> {
+    let value: serde_json::Value = serde_json::from_str(json_str)?;
+    // This creates a pretty-printed JSON string.
+    let pretty = serde_json::to_string_pretty(&value)?;
+    println!("{}", pretty);
+    Ok(())
+}
+
+fn test_api_key(api_key: &str) -> eyre::Result<()> {
+    let client = Client::new();
+    let response = client
+        .get("https://api.openai.com/v1/models")
+        .header("Authorization", format!("Bearer {}", api_key))
+        .send()?;
+
+    // Check if the request was successful
+    if response.status().is_success() {
+        let response_text = response.text()?;
+        // Pretty print the JSON.
+        pretty_print_json(&response_text).unwrap();
+        Ok(())
+    } else {
+        Err(eyre::eyre!("API key test failed with status: {}", response.status()))
+    }
+}
+
 fn main() -> Result<()> {
     init_logger();
+
+    test_api_key(&CHATGPT_API_KEY)?;
 
     let cli = Cli::parse();
     let input = cli.words.join(" ");
@@ -59,7 +87,8 @@ fn load_prompt(file_path: &str) -> Result<String> {
 
 fn send_to_chatgpt(prompt: &str) -> Result<String> {
     let request_body = json!({
-        "model": "gpt-3.5-turbo",
+        //"model": "gpt-3.5-turbo",
+        "model": "gpt-3.5-turbo-16k",
         "messages": [
             { "role": "system", "content": "You are a helpful assistant. When transforming statements, preserve all URLs, `@handles`, and `#channels` exactly as they are, without any modifications. Do not include these instructions in your output." },
             { "role": "user", "content": prompt }
