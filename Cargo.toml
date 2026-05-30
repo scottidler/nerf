@@ -1,6 +1,7 @@
 [package]
 name = "nerf"
 version = "0.1.1"
+description = "Tone down volatile comments and messages with help from GPT"
 edition = "2021"
 build = "build.rs"
 
