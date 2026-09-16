@@ -13,8 +13,17 @@ use std::fs;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
+const API_KEY_VARS: &[&str] = &["CHATGPT_API_KEY", "OPENAI_API_KEY"];
+
+fn find_api_key() -> String {
+    API_KEY_VARS
+        .iter()
+        .find_map(|name| env::var(name).ok())
+        .unwrap_or_else(|| panic!("none of {:?} set in environment", API_KEY_VARS))
+}
+
 lazy_static! {
-    static ref CHATGPT_API_KEY: String = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY not set in environment");
+    static ref CHATGPT_API_KEY: String = find_api_key();
     static ref RUST_LOG: String = env::var("RUST_LOG").unwrap_or_else(|_| "WARNING".to_string());
 }
 
@@ -28,36 +37,8 @@ struct Cli {
     prompt: String,
 }
 
-fn pretty_print_json(json_str: &str) -> Result<(), serde_json::Error> {
-    let value: serde_json::Value = serde_json::from_str(json_str)?;
-    // This creates a pretty-printed JSON string.
-    let pretty = serde_json::to_string_pretty(&value)?;
-    println!("{}", pretty);
-    Ok(())
-}
-
-fn test_api_key(api_key: &str) -> eyre::Result<()> {
-    let client = Client::new();
-    let response = client
-        .get("https://api.openai.com/v1/models")
-        .header("Authorization", format!("Bearer {}", api_key))
-        .send()?;
-
-    // Check if the request was successful
-    if response.status().is_success() {
-        let response_text = response.text()?;
-        // Pretty print the JSON.
-        pretty_print_json(&response_text).unwrap();
-        Ok(())
-    } else {
-        Err(eyre::eyre!("API key test failed with status: {}", response.status()))
-    }
-}
-
 fn main() -> Result<()> {
     init_logger();
-
-    test_api_key(&CHATGPT_API_KEY)?;
 
     let cli = Cli::parse();
     let input = cli.words.join(" ");
