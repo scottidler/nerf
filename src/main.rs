@@ -89,13 +89,12 @@ fn send_to_chatgpt(prompt: &str) -> Result<String> {
         .map_err(|e| eyre!("Failed to send request: {}", e))?;
 
     if !response.status().is_success() {
-        return Err(eyre!(
-            "ChatGPT API call failed with status: {}",
-            response.status()
-        ));
+        return Err(eyre!("ChatGPT API call failed with status: {}", response.status()));
     }
 
-    let response_text = response.text().map_err(|e| eyre!("Failed to read response text: {}", e))?;
+    let response_text = response
+        .text()
+        .map_err(|e| eyre!("Failed to read response text: {}", e))?;
     debug!("ChatGPT API raw response: {}", response_text);
 
     let reworded = extract_reworded_text(&response_text)?;
@@ -105,8 +104,8 @@ fn send_to_chatgpt(prompt: &str) -> Result<String> {
 }
 
 fn extract_reworded_text(response: &str) -> Result<String> {
-    let response_json: serde_json::Value = serde_json::from_str(response)
-        .map_err(|e| eyre!("Failed to parse API response as JSON: {}", e))?;
+    let response_json: serde_json::Value =
+        serde_json::from_str(response).map_err(|e| eyre!("Failed to parse API response as JSON: {}", e))?;
 
     response_json["choices"]
         .get(0)
