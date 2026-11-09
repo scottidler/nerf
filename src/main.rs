@@ -28,7 +28,7 @@ lazy_static! {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "nerf", version = env!("GIT_DESCRIBE"), about = "AI-powered text processing tool")]
+#[command(name = "nerf", version = env!("BUILD_VERSION"), about = "AI-powered text processing tool")]
 struct Cli {
     #[arg(required = true)]
     words: Vec<String>,
